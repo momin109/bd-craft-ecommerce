@@ -25,6 +25,8 @@ import {
   TPaymentMethod,
 } from "./order.interface.js";
 
+import { OfferService } from "../offer/offer.service.js";
+
 const COD_SUCCESS_RATE_LIMIT = 60;
 const MIN_ORDERS_FOR_COD_RESTRICTION = 3;
 const DUPLICATE_ORDER_HOURS = 24;
@@ -238,10 +240,25 @@ const checkoutFromCart = async (userId: string, payload: TCheckoutPayload) => {
   const subtotal = orderItems.reduce((sum, item) => sum + item.itemTotal, 0);
   const shippingCharge = payload.shippingCharge || 0;
 
+  const offerResult = await OfferService.calculateOfferDiscount({
+    userId,
+    subtotal,
+    items: orderItems.map((item) => ({
+      product: item.product,
+      variantId: item.variantId,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      itemTotal: item.itemTotal,
+    })),
+  });
+
+  const offerDiscount = offerResult.offerDiscount;
+  const subtotalAfterOffer = subtotal - offerDiscount;
+
   const couponResult = await CouponService.calculateCouponDiscount({
     userId,
     couponCode: payload.couponCode,
-    subtotal,
+    subtotal: subtotalAfterOffer,
     items: orderItems.map((item) => ({
       product: item.product,
       variantId: item.variantId,
@@ -250,7 +267,9 @@ const checkoutFromCart = async (userId: string, payload: TCheckoutPayload) => {
     })),
   });
 
-  const discount = couponResult.discountAmount;
+  const couponDiscount = couponResult.discountAmount;
+  const discount = offerDiscount + couponDiscount;
+
   const totalPayable = subtotal + shippingCharge - discount;
 
   if (totalPayable < 0) {
@@ -288,9 +307,16 @@ const checkoutFromCart = async (userId: string, payload: TCheckoutPayload) => {
 
     subtotal,
     shippingCharge,
+
+    couponDiscount,
+    offerDiscount,
     discount,
-    coupon: couponResult.coupon?._id ?? undefined,
-    couponCode: couponResult.couponCode ?? undefined,
+
+    coupon: couponResult.coupon?._id,
+    couponCode: couponResult.couponCode,
+
+    appliedOffers: offerResult.appliedOffers,
+
     totalPayable,
 
     totalPurchaseCost,
@@ -313,6 +339,14 @@ const checkoutFromCart = async (userId: string, payload: TCheckoutPayload) => {
       customerId: userId,
       orderId: String(order._id),
       discountAmount: couponResult.discountAmount,
+    });
+  }
+
+  if (offerResult.appliedOffers.length > 0) {
+    await OfferService.recordOfferUsage({
+      customerId: userId,
+      orderId: String(order._id),
+      appliedOffers: offerResult.appliedOffers,
     });
   }
 
@@ -484,6 +518,8 @@ const updateOrderStatus = async (
   if (payload.status === "CANCELLED") {
     await restoreOrderStock(order);
     order.isStockDeducted = false;
+
+    await OfferService.releaseOfferUsageByOrder(String(order._id));
   }
 
   if (payload.status === "RETURNED") {

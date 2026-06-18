@@ -194,7 +194,8 @@ const calculateCouponDiscount = async (payload: TCalculateDiscountPayload) => {
 
   await validateCouponBase(coupon, payload.userId, payload.subtotal);
 
-  const eligibleSubtotal = await getEligibleSubtotal(coupon, payload.items);
+  const rawEligibleSubtotal = await getEligibleSubtotal(coupon, payload.items);
+  const eligibleSubtotal = Math.min(rawEligibleSubtotal, payload.subtotal);
 
   const discountAmount = calculateDiscountAmount(coupon, eligibleSubtotal);
 

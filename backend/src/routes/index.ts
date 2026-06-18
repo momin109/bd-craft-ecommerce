@@ -9,8 +9,11 @@ import { orderRoutes } from "../modules/order/order.route.js";
 import { paymentRoutes } from "../modules/payment/payment.route.js";
 import { courierRoutes } from "../modules/courier/courier.route.js";
 import { notificationRoutes } from "../modules/notification/notification.route.js";
+
 import { couponRoutes } from "../modules/coupon/coupon.route.js";
 import { offerRoutes } from "../modules/offer/offer.route.js";
+import { reviewRoutes } from "../modules/review/review.route.js";
+import { reportRoutes } from "../modules/report/report.route.js";
 
 const router = Router();
 
@@ -26,6 +29,8 @@ router.use("/couriers", courierRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/coupons", couponRoutes);
 router.use("/offers", offerRoutes);
+router.use("/reviews", reviewRoutes);
+router.use("/reports", reportRoutes);
 
 export const apiRoutes = router;
 

@@ -242,6 +242,18 @@ const orderSchema = new Schema<IOrder>(
       min: 0,
     },
 
+    couponDiscount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    offerDiscount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     discount: {
       type: Number,
       default: 0,
@@ -258,6 +270,78 @@ const orderSchema = new Schema<IOrder>(
       uppercase: true,
       trim: true,
     },
+
+    appliedOffers: [
+      {
+        offer: {
+          type: Schema.Types.ObjectId,
+          ref: "OfferCampaign",
+          required: true,
+        },
+
+        code: {
+          type: String,
+          uppercase: true,
+          trim: true,
+          required: true,
+        },
+
+        title: {
+          type: String,
+          trim: true,
+          required: true,
+        },
+
+        type: {
+          type: String,
+          enum: ["FLASH_SALE", "BUNDLE"],
+          required: true,
+        },
+
+        discountAmount: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+
+        items: [
+          {
+            product: {
+              type: Schema.Types.ObjectId,
+              ref: "Product",
+              required: true,
+            },
+
+            variantId: {
+              type: Schema.Types.ObjectId,
+            },
+
+            quantity: {
+              type: Number,
+              required: true,
+              min: 1,
+            },
+
+            regularUnitPrice: {
+              type: Number,
+              required: true,
+              min: 0,
+            },
+
+            offerUnitPrice: {
+              type: Number,
+              min: 0,
+            },
+
+            discountAmount: {
+              type: Number,
+              required: true,
+              min: 0,
+            },
+          },
+        ],
+      },
+    ],
 
     totalPayable: {
       type: Number,

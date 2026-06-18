@@ -1,7 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown, Phone } from "lucide-react";
+import {
+  Search,
+  Heart,
+  ShoppingBag,
+  User,
+  Menu,
+  X,
+  ChevronDown,
+  Phone,
+} from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/hooks/redux";
 import { selectCartCount, toggleCart } from "@/store/slices/cartSlice";
 import { selectWishlistItems } from "@/store/slices/wishlistSlice";
@@ -35,7 +44,7 @@ export default function Header() {
   return (
     <>
       {/* Top Bar */}
-      <div className="bg-brand-800 text-brand-100 text-xs py-2 px-4 hidden md:block">
+      {/* <div className="bg-brand-800 text-brand-100 text-xs py-2 px-4 hidden md:block">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1"><Phone size={11} /> 16577 (Hotline)</span>
@@ -46,13 +55,15 @@ export default function Header() {
             <Link href="/stores" className="hover:text-white transition-colors">Store Locator</Link>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Header */}
-      <header className={cn(
-        "sticky top-0 z-50 bg-white transition-all duration-300",
-        scrolled ? "shadow-md" : "border-b border-brand-100"
-      )}>
+      <header
+        className={cn(
+          "sticky top-0 z-50 bg-white transition-all duration-300",
+          scrolled ? "shadow-md" : "border-b border-brand-100",
+        )}
+      >
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Mobile Menu */}
@@ -85,11 +96,16 @@ export default function Header() {
                     "px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-1 group",
                     link.highlight
                       ? "text-red-600 hover:text-red-700 font-semibold"
-                      : "text-gray-700 hover:text-brand-700 hover:bg-brand-50"
+                      : "text-gray-700 hover:text-brand-700 hover:bg-brand-50",
                   )}
                 >
                   {link.label}
-                  {link.mega && <ChevronDown size={13} className="opacity-50 group-hover:opacity-100 transition-opacity" />}
+                  {link.mega && (
+                    <ChevronDown
+                      size={13}
+                      className="opacity-50 group-hover:opacity-100 transition-opacity"
+                    />
+                  )}
                 </Link>
               ))}
             </nav>
@@ -102,15 +118,24 @@ export default function Header() {
               >
                 <Search size={20} />
               </button>
-              <Link href="/wishlist" className="relative p-2 text-gray-600 hover:text-brand-700 transition-colors hidden sm:flex">
+              <Link
+                href="/wishlist"
+                className="relative p-2 text-gray-600 hover:text-brand-700 transition-colors hidden sm:flex"
+              >
                 <Heart size={20} />
                 {wishlistItems.length > 0 && (
-                  <span suppressHydrationWarning className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center px-1">
+                  <span
+                    suppressHydrationWarning
+                    className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center px-1"
+                  >
                     {wishlistItems.length}
                   </span>
                 )}
               </Link>
-              <Link href="/account" className="p-2 text-gray-600 hover:text-brand-700 transition-colors hidden sm:flex">
+              <Link
+                href="/account"
+                className="p-2 text-gray-600 hover:text-brand-700 transition-colors hidden sm:flex"
+              >
                 <User size={20} />
               </Link>
               <button
@@ -119,7 +144,10 @@ export default function Header() {
               >
                 <ShoppingBag size={20} />
                 {cartCount > 0 && (
-                  <span suppressHydrationWarning className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-brand-600 text-white text-[10px] rounded-full flex items-center justify-center px-1">
+                  <span
+                    suppressHydrationWarning
+                    className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-brand-600 text-white text-[10px] rounded-full flex items-center justify-center px-1"
+                  >
                     {cartCount}
                   </span>
                 )}
@@ -132,7 +160,10 @@ export default function Header() {
         {searchOpen && (
           <div className="border-t border-brand-100 bg-cream py-4 px-4 animate-fade-in">
             <div className="max-w-2xl mx-auto relative">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-400" />
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-400"
+              />
               <input
                 autoFocus
                 type="search"
@@ -165,15 +196,29 @@ export default function Header() {
                   onClick={() => setMobileOpen(false)}
                   className={cn(
                     "block px-3 py-3 rounded-lg text-sm font-medium border-b border-brand-50",
-                    link.highlight ? "text-red-600 font-semibold" : "text-gray-700"
+                    link.highlight
+                      ? "text-red-600 font-semibold"
+                      : "text-gray-700",
                   )}
                 >
                   {link.label}
                 </Link>
               ))}
               <div className="pt-3 flex gap-3">
-                <Link href="/account" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2.5 border border-brand-200 rounded-lg text-sm text-brand-700 font-medium">Account</Link>
-                <Link href="/wishlist" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2.5 border border-brand-200 rounded-lg text-sm text-brand-700 font-medium">Wishlist ({wishlistItems.length})</Link>
+                <Link
+                  href="/account"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex-1 text-center py-2.5 border border-brand-200 rounded-lg text-sm text-brand-700 font-medium"
+                >
+                  Account
+                </Link>
+                <Link
+                  href="/wishlist"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex-1 text-center py-2.5 border border-brand-200 rounded-lg text-sm text-brand-700 font-medium"
+                >
+                  Wishlist ({wishlistItems.length})
+                </Link>
               </div>
             </nav>
           </div>

@@ -73,16 +73,36 @@ export interface IOrder {
   orderStatus: TOrderStatus;
   statusLogs: IOrderStatusLog[];
 
+  totalPurchaseCost: number;
+  totalProfit: number;
+
   subtotal: number;
   shippingCharge: number;
+
+  couponDiscount: number;
+  offerDiscount: number;
   discount: number;
-  totalPayable: number;
 
   coupon?: Types.ObjectId;
   couponCode?: string;
 
-  totalPurchaseCost: number;
-  totalProfit: number;
+  appliedOffers: {
+    offer: Types.ObjectId;
+    code: string;
+    title: string;
+    type: "FLASH_SALE" | "BUNDLE";
+    discountAmount: number;
+    items: {
+      product: Types.ObjectId;
+      variantId?: Types.ObjectId;
+      quantity: number;
+      regularUnitPrice: number;
+      offerUnitPrice?: number;
+      discountAmount: number;
+    }[];
+  }[];
+
+  totalPayable: number;
 
   courier: {
     provider: TCourierProvider;
