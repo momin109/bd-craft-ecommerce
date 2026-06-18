@@ -43,4 +43,4 @@ npm run dev
 
 ## Author
 
-Developed by Milon Ray
+Developed by Md Momin Ali
