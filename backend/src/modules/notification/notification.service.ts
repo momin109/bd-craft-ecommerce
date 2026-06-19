@@ -54,6 +54,7 @@ const sendNotification = async (payload: TSendNotificationPayload) => {
       recipient: payload.recipient,
       subject: payload.subject,
       message: payload.message,
+      attachments: payload.attachments,
     });
 
     log.status = result.skipped ? "SKIPPED" : "SENT";

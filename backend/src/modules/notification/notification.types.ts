@@ -3,6 +3,13 @@ import {
   TNotificationEvent,
 } from "./notification.interface.js";
 
+export type TNotificationAttachment = {
+  filename: string;
+  path?: string;
+  content?: Buffer;
+  contentType?: string;
+};
+
 export type TSendNotificationPayload = {
   channel: TNotificationChannel;
   event: TNotificationEvent;
@@ -10,6 +17,8 @@ export type TSendNotificationPayload = {
   recipient: string;
   subject?: string;
   message: string;
+
+  attachments?: TNotificationAttachment[];
 
   orderId?: string;
   customerId?: string;
@@ -19,6 +28,7 @@ export type TAdapterSendPayload = {
   recipient: string;
   subject?: string;
   message: string;
+  attachments?: TNotificationAttachment[];
 };
 
 export type TAdapterSendResult = {

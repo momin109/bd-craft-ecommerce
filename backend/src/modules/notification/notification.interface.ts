@@ -12,6 +12,8 @@ export type TNotificationEvent =
   | "ORDER_STATUS_UPDATED"
   | "ORDER_DELIVERED"
   | "ORDER_RETURNED"
+  | "ABANDONED_CART_RECOVERY"
+  | "REFERRAL_REWARD"
   | "CUSTOM";
 
 export interface INotificationLog {

@@ -14,6 +14,12 @@ import { couponRoutes } from "../modules/coupon/coupon.route.js";
 import { offerRoutes } from "../modules/offer/offer.route.js";
 import { reviewRoutes } from "../modules/review/review.route.js";
 import { reportRoutes } from "../modules/report/report.route.js";
+import { userRoutes } from "../modules/user/user.route.js";
+
+import { abandonedCartRoutes } from "../modules/abandonedCart/abandonedCart.route.js";
+import { referralRoutes } from "../modules/referral/referral.route.js";
+import { facebookCapiRoutes } from "../modules/facebookCapi/facebookCapi.route.js";
+import { invoiceRoutes } from "../modules/invoice/invoice.route.js";
 
 const router = Router();
 
@@ -31,6 +37,12 @@ router.use("/coupons", couponRoutes);
 router.use("/offers", offerRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/reports", reportRoutes);
+router.use("/users", userRoutes);
+
+router.use("/abandoned-carts", abandonedCartRoutes);
+router.use("/referrals", referralRoutes);
+router.use("/facebook-capi", facebookCapiRoutes);
+router.use("/invoices", invoiceRoutes);
 
 export const apiRoutes = router;
 

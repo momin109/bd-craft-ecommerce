@@ -2,6 +2,8 @@ import { AppError } from "../../errors/AppError.js";
 import { httpStatus } from "../../constants/httpStatus.js";
 import { User } from "../user/user.model.js";
 import { Otp } from "../otp/otp.model.js";
+import { ReferralService } from "../referral/referral.service.js";
+
 import {
   compareOtp,
   generateOtpCode,
@@ -19,6 +21,7 @@ type TRegisterPayload = {
   mobile: string;
   email?: string;
   password: string;
+  referralCode?: string;
 };
 
 type TVerifyOtpPayload = {
@@ -41,6 +44,7 @@ const registerUser = async (payload: TRegisterPayload) => {
   }
 
   let user = existingUser;
+  let isNewUser = false;
 
   if (!user) {
     user = await User.create({
@@ -67,6 +71,25 @@ const registerUser = async (payload: TRegisterPayload) => {
     purpose: "REGISTRATION",
     expiresAt: getOtpExpiryDate(5),
   });
+
+  if (!user) {
+    user = await User.create({
+      name: payload.name,
+      mobile,
+      email: payload.email,
+      password: payload.password,
+      role: "CUSTOMER",
+    });
+
+    isNewUser = true;
+  }
+
+  if (isNewUser) {
+    await ReferralService.applyReferralOnRegistration(
+      String(user._id),
+      payload.referralCode,
+    );
+  }
 
   return {
     user: {

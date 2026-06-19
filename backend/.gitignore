@@ -6,3 +6,4 @@ dist/
 build/
 uploads/
 .DS_Store
+storage/invoices/*.pdf
