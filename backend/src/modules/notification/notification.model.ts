@@ -21,6 +21,8 @@ const notificationLogSchema = new Schema<INotificationLog>(
         "ORDER_DELIVERED",
         "ORDER_RETURNED",
         "CUSTOM",
+        "ABANDONED_CART_RECOVERY",
+        "REFERRAL_REWARD",
       ],
       required: true,
       index: true,

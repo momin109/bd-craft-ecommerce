@@ -30,6 +30,11 @@ const userSchema = new Schema<IUser>(
       select: false,
     },
 
+    avatar: {
+      type: String,
+      trim: true,
+    },
+
     role: {
       type: String,
       enum: ["SUPER_ADMIN", "ADMIN", "CUSTOMER"],
@@ -47,6 +52,25 @@ const userSchema = new Schema<IUser>(
     isMobileVerified: {
       type: Boolean,
       default: false,
+    },
+
+    address: {
+      district: {
+        type: String,
+        trim: true,
+      },
+      city: {
+        type: String,
+        trim: true,
+      },
+      area: {
+        type: String,
+        trim: true,
+      },
+      addressLine: {
+        type: String,
+        trim: true,
+      },
     },
 
     orderStats: {
@@ -75,6 +99,42 @@ const userSchema = new Schema<IUser>(
     codAllowed: {
       type: Boolean,
       default: true,
+    },
+
+    referralCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+      uppercase: true,
+      trim: true,
+      index: true,
+    },
+
+    referredBy: {
+      type: String,
+      uppercase: true,
+      trim: true,
+      index: true,
+    },
+
+    referralStats: {
+      totalReferred: {
+        type: Number,
+        default: 0,
+      },
+      totalRewarded: {
+        type: Number,
+        default: 0,
+      },
+      totalRewardAmount: {
+        type: Number,
+        default: 0,
+      },
+    },
+
+    adminNote: {
+      type: String,
+      trim: true,
     },
   },
   {

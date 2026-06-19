@@ -10,6 +10,7 @@ export const registerUserValidation = z.object({
       .regex(bdMobileRegex, "Invalid Bangladeshi mobile number"),
     email: z.string().email("Invalid email").optional(),
     password: z.string().min(6, "Password must be at least 6 characters"),
+    referralCode: z.string().optional(),
   }),
 });
 

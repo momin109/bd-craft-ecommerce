@@ -26,6 +26,7 @@ import {
 } from "./order.interface.js";
 
 import { OfferService } from "../offer/offer.service.js";
+import { ReferralService } from "../referral/referral.service.js";
 
 const COD_SUCCESS_RATE_LIMIT = 60;
 const MIN_ORDERS_FOR_COD_RESTRICTION = 3;
@@ -543,6 +544,14 @@ const updateOrderStatus = async (
     previousStatus !== payload.status
   ) {
     await updateCustomerOrderStats(order.customer, payload.status);
+  }
+
+  if (payload.status === "DELIVERED" && previousStatus !== "DELIVERED") {
+    ReferralService.processReferralRewardForDeliveredOrder(
+      String(order._id),
+    ).catch((error) => {
+      console.error("Referral reward processing failed:", error);
+    });
   }
 
   if (
