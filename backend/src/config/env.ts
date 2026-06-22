@@ -130,5 +130,39 @@ export const env = {
         process.env.API_BASE_URL ||
         `http://localhost:${process.env.PORT}`,
     },
+
+    ai: {
+      enabled: process.env.AI_GENERATION_ENABLED === "true",
+      openaiApiKey: process.env.OPENAI_API_KEY || "",
+      openaiModel: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+      defaultLanguage: (process.env.AI_DEFAULT_LANGUAGE as "bn" | "en") || "bn",
+    },
+  },
+
+  upload: {
+    provider:
+      (process.env.UPLOAD_PROVIDER as "LOCAL" | "CLOUDINARY" | "S3") || "LOCAL",
+
+    maxFileSizeMb: Number(process.env.UPLOAD_MAX_FILE_SIZE_MB || 5),
+
+    local: {
+      publicUrl:
+        process.env.UPLOAD_LOCAL_PUBLIC_URL ||
+        `http://localhost:${process.env.PORT}/uploads`,
+    },
+
+    cloudinary: {
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
+      apiKey: process.env.CLOUDINARY_API_KEY || "",
+      apiSecret: process.env.CLOUDINARY_API_SECRET || "",
+    },
+
+    s3: {
+      region: process.env.AWS_S3_REGION || "",
+      bucket: process.env.AWS_S3_BUCKET || "",
+      accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID || "",
+      secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY || "",
+      publicUrl: process.env.AWS_S3_PUBLIC_URL || "",
+    },
   },
 };
