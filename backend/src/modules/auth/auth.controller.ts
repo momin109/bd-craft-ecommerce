@@ -30,6 +30,8 @@ const verifyMobileOtp = catchAsync(async (req: Request, res: Response) => {
 const loginUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.loginUser(req.body);
 
+  console.log("BODY:", req.body);
+
   res.cookie("refreshToken", result.refreshToken, {
     httpOnly: true,
     secure: env.nodeEnv === "production",

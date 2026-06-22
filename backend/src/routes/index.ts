@@ -21,6 +21,11 @@ import { referralRoutes } from "../modules/referral/referral.route.js";
 import { facebookCapiRoutes } from "../modules/facebookCapi/facebookCapi.route.js";
 import { invoiceRoutes } from "../modules/invoice/invoice.route.js";
 
+import { aiRoutes } from "../modules/ai/ai.route.js";
+import { uploadRoutes } from "../modules/upload/upload.route.js";
+import { inventoryRoutes } from "../modules/inventory/inventory.route.js";
+import { returnRoutes } from "../modules/return/return.route.js";
+
 const router = Router();
 
 router.use("/health", healthRoutes);
@@ -43,6 +48,10 @@ router.use("/abandoned-carts", abandonedCartRoutes);
 router.use("/referrals", referralRoutes);
 router.use("/facebook-capi", facebookCapiRoutes);
 router.use("/invoices", invoiceRoutes);
+router.use("/ai", aiRoutes);
+router.use("/uploads", uploadRoutes);
+router.use("/inventory", inventoryRoutes);
+router.use("/returns", returnRoutes);
 
 export const apiRoutes = router;
 
