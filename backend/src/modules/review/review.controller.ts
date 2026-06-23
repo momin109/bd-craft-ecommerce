@@ -19,7 +19,7 @@ const createReview = catchAsync(async (req: Request, res: Response) => {
 
 const getProductReviews = catchAsync(async (req: Request, res: Response) => {
   const result = await ReviewService.getProductReviews(
-    req.params.productId,
+    req.params.productId as string,
     req.query,
   );
 
@@ -59,7 +59,7 @@ const getAllReviewsForAdmin = catchAsync(
 
 const updateReviewStatus = catchAsync(async (req: Request, res: Response) => {
   const result = await ReviewService.updateReviewStatus(
-    req.params.reviewId,
+    req.params.reviewId as string,
     req.user!.userId,
     req.body,
   );
@@ -74,7 +74,7 @@ const updateReviewStatus = catchAsync(async (req: Request, res: Response) => {
 
 const hideReview = catchAsync(async (req: Request, res: Response) => {
   const result = await ReviewService.hideReview(
-    req.params.reviewId,
+    req.params.reviewId as string,
     req.user!.userId,
     req.body?.adminNote,
   );

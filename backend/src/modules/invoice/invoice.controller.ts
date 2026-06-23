@@ -9,7 +9,7 @@ import { InvoiceService } from "./invoice.service.js";
 const generateInvoiceForOrder = catchAsync(
   async (req: Request, res: Response) => {
     const result = await InvoiceService.generateInvoiceForOrder(
-      req.params.orderId,
+      req.params.orderId as string,
       {
         forceRegenerate: req.query.force === "true",
       },
@@ -27,7 +27,7 @@ const generateInvoiceForOrder = catchAsync(
 const emailInvoiceToCustomer = catchAsync(
   async (req: Request, res: Response) => {
     const result = await InvoiceService.emailInvoiceToCustomer(
-      req.params.orderId,
+      req.params.orderId as string,
       {
         forceRegenerate: req.query.force === "true",
       },
@@ -45,7 +45,7 @@ const emailInvoiceToCustomer = catchAsync(
 const getMyOrderInvoice = catchAsync(async (req: Request, res: Response) => {
   const result = await InvoiceService.getInvoiceByOrderForCustomer(
     req.user!.userId,
-    req.params.orderId,
+    req.params.orderId as string,
   );
 
   sendResponse(res, {
@@ -72,7 +72,7 @@ const getAllInvoicesForAdmin = catchAsync(
 
 const downloadInvoice = catchAsync(async (req: Request, res: Response) => {
   const invoice = await InvoiceService.getInvoiceByNumber(
-    req.params.invoiceNumber,
+    req.params.invoiceNumber as string,
   );
 
   res.download(invoice.pdfPath, `${invoice.invoiceNumber}.pdf`);

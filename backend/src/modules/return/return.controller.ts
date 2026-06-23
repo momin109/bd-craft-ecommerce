@@ -35,7 +35,7 @@ const getMyReturns = catchAsync(async (req: Request, res: Response) => {
 const getMyReturnDetails = catchAsync(async (req: Request, res: Response) => {
   const result = await ReturnService.getMyReturnDetails(
     req.user!.userId,
-    req.params.returnId,
+    req.params.returnId as string,
   );
 
   sendResponse(res, {
@@ -63,7 +63,7 @@ const getAllReturnsForAdmin = catchAsync(
 const getSingleReturnForAdmin = catchAsync(
   async (req: Request, res: Response) => {
     const result = await ReturnService.getSingleReturnForAdmin(
-      req.params.returnId,
+      req.params.returnId as string,
     );
 
     sendResponse(res, {
@@ -78,7 +78,7 @@ const getSingleReturnForAdmin = catchAsync(
 const updateReturnStatus = catchAsync(async (req: Request, res: Response) => {
   const result = await ReturnService.updateReturnStatus(
     req.user!.userId,
-    req.params.returnId,
+    req.params.returnId as string,
     req.body,
   );
 
@@ -93,7 +93,7 @@ const updateReturnStatus = catchAsync(async (req: Request, res: Response) => {
 const restockReturnItems = catchAsync(async (req: Request, res: Response) => {
   const result = await ReturnService.restockReturnItems(
     req.user!.userId,
-    req.params.returnId,
+    req.params.returnId as string,
     req.body,
   );
 
@@ -108,7 +108,7 @@ const restockReturnItems = catchAsync(async (req: Request, res: Response) => {
 const markReturnRefunded = catchAsync(async (req: Request, res: Response) => {
   const result = await ReturnService.markReturnRefunded(
     req.user!.userId,
-    req.params.returnId,
+    req.params.returnId as string,
     req.body,
   );
 

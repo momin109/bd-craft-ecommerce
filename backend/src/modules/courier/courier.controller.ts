@@ -8,7 +8,7 @@ import { CourierService } from "./courier.service.js";
 
 const bookCourierForOrder = catchAsync(async (req: Request, res: Response) => {
   const result = await CourierService.bookCourierForOrder(
-    req.params.orderId,
+    req.params.orderId as string,
     req.user!.userId,
     req.body,
   );
@@ -22,7 +22,9 @@ const bookCourierForOrder = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getShipmentByOrder = catchAsync(async (req: Request, res: Response) => {
-  const result = await CourierService.getShipmentByOrder(req.params.orderId);
+  const result = await CourierService.getShipmentByOrder(
+    req.params.orderId as string,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -33,7 +35,9 @@ const getShipmentByOrder = catchAsync(async (req: Request, res: Response) => {
 });
 
 const syncShipmentStatus = catchAsync(async (req: Request, res: Response) => {
-  const result = await CourierService.syncShipmentStatus(req.params.shipmentId);
+  const result = await CourierService.syncShipmentStatus(
+    req.params.shipmentId as string,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

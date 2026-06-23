@@ -11,7 +11,7 @@ import { TOnlinePaymentGateway } from "./payment.interface.js";
 const initiatePayment = catchAsync(async (req: Request, res: Response) => {
   const result = await PaymentService.initiatePayment(
     req.user!.userId,
-    req.params.orderId,
+    req.params.orderId as string,
     req.ip,
   );
 

@@ -56,7 +56,7 @@ const getAllCustomersForAdmin = catchAsync(
 const getCustomerDetailsForAdmin = catchAsync(
   async (req: Request, res: Response) => {
     const result = await UserService.getCustomerDetailsForAdmin(
-      req.params.customerId,
+      req.params.customerId as string,
     );
 
     sendResponse(res, {
@@ -71,7 +71,7 @@ const getCustomerDetailsForAdmin = catchAsync(
 const getCustomerOrdersForAdmin = catchAsync(
   async (req: Request, res: Response) => {
     const result = await UserService.getCustomerOrdersForAdmin(
-      req.params.customerId,
+      req.params.customerId as string,
       req.query,
     );
 
@@ -88,7 +88,7 @@ const getCustomerOrdersForAdmin = catchAsync(
 const updateCustomerCodAccess = catchAsync(
   async (req: Request, res: Response) => {
     const result = await UserService.updateCustomerCodAccess(
-      req.params.customerId,
+      req.params.customerId as string,
       req.body,
     );
 
@@ -103,7 +103,7 @@ const updateCustomerCodAccess = catchAsync(
 
 const updateCustomerStatus = catchAsync(async (req: Request, res: Response) => {
   const result = await UserService.updateCustomerStatus(
-    req.params.customerId,
+    req.params.customerId as string,
     req.body,
   );
 
@@ -117,7 +117,7 @@ const updateCustomerStatus = catchAsync(async (req: Request, res: Response) => {
 
 const updateCustomerNote = catchAsync(async (req: Request, res: Response) => {
   const result = await UserService.updateCustomerNote(
-    req.params.customerId,
+    req.params.customerId as string,
     req.body,
   );
 
@@ -132,7 +132,7 @@ const updateCustomerNote = catchAsync(async (req: Request, res: Response) => {
 const updateCustomerByAdmin = catchAsync(
   async (req: Request, res: Response) => {
     const result = await UserService.updateCustomerByAdmin(
-      req.params.customerId,
+      req.params.customerId as string,
       req.body,
     );
 
@@ -146,7 +146,9 @@ const updateCustomerByAdmin = catchAsync(
 );
 
 const softDeleteCustomer = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserService.softDeleteCustomer(req.params.customerId);
+  const result = await UserService.softDeleteCustomer(
+    req.params.customerId as string,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
