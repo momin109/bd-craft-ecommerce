@@ -24,6 +24,8 @@ import { OrderService } from "./order.service.js";
 //   });
 // });
 
+import { Types } from "mongoose";
+
 const checkoutFromCart = catchAsync(async (req: Request, res: Response) => {
   const order = await OrderService.checkoutFromCart(req.user!.userId, req.body);
 
@@ -43,7 +45,7 @@ const checkoutFromCart = catchAsync(async (req: Request, res: Response) => {
 
 const updateOrderStatus = catchAsync(async (req: Request, res: Response) => {
   const order = await OrderService.updateOrderStatus(
-    req.params.orderId,
+    req.params.orderId as string,
     req.user!.userId,
     req.body,
   );
@@ -56,7 +58,7 @@ const updateOrderStatus = catchAsync(async (req: Request, res: Response) => {
     env.courier.defaultProvider !== "NONE"
   ) {
     courierBooking = await CourierService.bookCourierForOrder(
-      req.params.orderId,
+      req.params.orderId as string,
       req.user!.userId,
       {
         provider: env.courier.defaultProvider as "STEADFAST" | "PATHAO",
@@ -91,7 +93,7 @@ const getMyOrders = catchAsync(async (req: Request, res: Response) => {
 const getMySingleOrder = catchAsync(async (req: Request, res: Response) => {
   const result = await OrderService.getMySingleOrder(
     req.user!.userId,
-    req.params.orderId,
+    req.params.orderId as string,
   );
 
   sendResponse(res, {
@@ -104,7 +106,7 @@ const getMySingleOrder = catchAsync(async (req: Request, res: Response) => {
 
 const trackOrder = catchAsync(async (req: Request, res: Response) => {
   const result = await OrderService.trackOrder(
-    req.params.orderNumber,
+    req.params.orderNumber as string,
     String(req.query.mobile),
   );
 
@@ -131,7 +133,7 @@ const getAllOrdersForAdmin = catchAsync(async (req: Request, res: Response) => {
 const getSingleOrderForAdmin = catchAsync(
   async (req: Request, res: Response) => {
     const result = await OrderService.getSingleOrderForAdmin(
-      req.params.orderId,
+      req.params.orderId as string,
     );
 
     sendResponse(res, {

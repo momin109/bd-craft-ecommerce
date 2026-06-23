@@ -30,7 +30,10 @@ const getAllCoupons = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateCoupon = catchAsync(async (req: Request, res: Response) => {
-  const result = await CouponService.updateCoupon(req.params.id, req.body);
+  const result = await CouponService.updateCoupon(
+    req.params.id as string,
+    req.body,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -41,7 +44,7 @@ const updateCoupon = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteCoupon = catchAsync(async (req: Request, res: Response) => {
-  const result = await CouponService.deleteCoupon(req.params.id);
+  const result = await CouponService.deleteCoupon(req.params.id as string);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

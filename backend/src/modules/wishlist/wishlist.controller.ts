@@ -18,7 +18,7 @@ const getMyWishlist = catchAsync(async (req: Request, res: Response) => {
 const addToWishlist = catchAsync(async (req: Request, res: Response) => {
   const result = await WishlistService.addToWishlist(
     req.user!.userId,
-    req.params.productId,
+    req.params.productId as string,
   );
 
   sendResponse(res, {
@@ -32,7 +32,7 @@ const addToWishlist = catchAsync(async (req: Request, res: Response) => {
 const removeFromWishlist = catchAsync(async (req: Request, res: Response) => {
   const result = await WishlistService.removeFromWishlist(
     req.user!.userId,
-    req.params.productId,
+    req.params.productId as string,
   );
 
   sendResponse(res, {
@@ -46,7 +46,7 @@ const removeFromWishlist = catchAsync(async (req: Request, res: Response) => {
 const checkWishlistProduct = catchAsync(async (req: Request, res: Response) => {
   const result = await WishlistService.checkWishlistProduct(
     req.user!.userId,
-    req.params.productId,
+    req.params.productId as string,
   );
 
   sendResponse(res, {

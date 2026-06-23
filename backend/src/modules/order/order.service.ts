@@ -1,5 +1,6 @@
 import crypto from "crypto";
-import { FilterQuery, Types } from "mongoose";
+import { Types } from "mongoose";
+import type { FilterQuery } from "mongoose";
 import { NotificationService } from "../notification/notification.service.js";
 
 import { CouponService } from "../coupon/coupon.service.js";

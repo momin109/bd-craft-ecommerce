@@ -111,32 +111,32 @@ export const env = {
       phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || "",
       accessToken: process.env.WHATSAPP_ACCESS_TOKEN || "",
     },
+  },
 
-    meta: {
-      capiEnabled: process.env.META_CAPI_ENABLED === "true",
-      pixelId: process.env.META_PIXEL_ID || "",
-      accessToken: process.env.META_ACCESS_TOKEN || "",
-      apiVersion: process.env.META_API_VERSION || "v20.0",
-      testEventCode: process.env.META_TEST_EVENT_CODE || "",
-    },
+  invoice: {
+    companyName: process.env.INVOICE_COMPANY_NAME || "Your Shop Name",
+    companyPhone: process.env.INVOICE_COMPANY_PHONE || "0000000000",
+    companyEmail: process.env.INVOICE_COMPANY_EMAIL || "test@email.com",
+    companyAddress: process.env.INVOICE_COMPANY_ADDRESS || "Bangladesh",
+    publicBaseUrl:
+      process.env.INVOICE_PUBLIC_BASE_URL ||
+      process.env.API_BASE_URL ||
+      `http://localhost:${process.env.PORT}`,
+  },
 
-    invoice: {
-      companyName: process.env.INVOICE_COMPANY_NAME || "Your Shop Name",
-      companyPhone: process.env.INVOICE_COMPANY_PHONE || "",
-      companyEmail: process.env.INVOICE_COMPANY_EMAIL || "",
-      companyAddress: process.env.INVOICE_COMPANY_ADDRESS || "",
-      publicBaseUrl:
-        process.env.INVOICE_PUBLIC_BASE_URL ||
-        process.env.API_BASE_URL ||
-        `http://localhost:${process.env.PORT}`,
-    },
+  meta: {
+    capiEnabled: process.env.META_CAPI_ENABLED === "true",
+    pixelId: process.env.META_PIXEL_ID || "",
+    accessToken: process.env.META_ACCESS_TOKEN || "",
+    apiVersion: process.env.META_API_VERSION || "v20.0",
+    testEventCode: process.env.META_TEST_EVENT_CODE || "",
+  },
 
-    ai: {
-      enabled: process.env.AI_GENERATION_ENABLED === "true",
-      openaiApiKey: process.env.OPENAI_API_KEY || "",
-      openaiModel: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      defaultLanguage: (process.env.AI_DEFAULT_LANGUAGE as "bn" | "en") || "bn",
-    },
+  ai: {
+    enabled: process.env.AI_GENERATION_ENABLED === "true",
+    openaiApiKey: process.env.OPENAI_API_KEY || "",
+    openaiModel: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+    defaultLanguage: (process.env.AI_DEFAULT_LANGUAGE as "bn" | "en") || "bn",
   },
 
   upload: {

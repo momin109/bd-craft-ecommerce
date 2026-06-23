@@ -51,7 +51,7 @@ const uploadAvatar = catchAsync(async (req: Request, res: Response) => {
 const uploadProductImages = catchAsync(async (req: Request, res: Response) => {
   const result = await UploadService.uploadProductImages(
     req.user!.userId,
-    req.params.productId,
+    req.params.productId as string,
     req.files as Express.Multer.File[],
   );
 
@@ -113,7 +113,9 @@ const getAllUploadedFilesForAdmin = catchAsync(
 );
 
 const softDeleteFileAsset = catchAsync(async (req: Request, res: Response) => {
-  const result = await UploadService.softDeleteFileAsset(req.params.fileId);
+  const result = await UploadService.softDeleteFileAsset(
+    req.params.fileId as string,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

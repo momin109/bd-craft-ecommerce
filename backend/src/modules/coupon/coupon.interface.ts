@@ -10,6 +10,7 @@ export type TCouponScope =
 export type TCouponStatus = "ACTIVE" | "INACTIVE";
 
 export interface ICoupon {
+  _id?: Types.ObjectId;
   code: string;
   title: string;
   description?: string;

@@ -29,7 +29,7 @@ const addToCart = catchAsync(async (req: Request, res: Response) => {
 const updateCartItem = catchAsync(async (req: Request, res: Response) => {
   const result = await CartService.updateCartItem(
     req.user!.userId,
-    req.params.itemId,
+    req.params.itemId as string,
     req.body,
   );
 
@@ -44,7 +44,7 @@ const updateCartItem = catchAsync(async (req: Request, res: Response) => {
 const removeCartItem = catchAsync(async (req: Request, res: Response) => {
   const result = await CartService.removeCartItem(
     req.user!.userId,
-    req.params.itemId,
+    req.params.itemId as string,
   );
 
   sendResponse(res, {

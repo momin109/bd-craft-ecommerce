@@ -28,7 +28,9 @@ const getAllProducts = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getSingleProduct = catchAsync(async (req: Request, res: Response) => {
-  const result = await ProductService.getSingleProduct(req.params.slug);
+  const result = await ProductService.getSingleProduct(
+    req.params.slug as string,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -39,7 +41,10 @@ const getSingleProduct = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateProduct = catchAsync(async (req: Request, res: Response) => {
-  const result = await ProductService.updateProduct(req.params.id, req.body);
+  const result = await ProductService.updateProduct(
+    req.params.id as string,
+    req.body,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -50,7 +55,7 @@ const updateProduct = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteProduct = catchAsync(async (req: Request, res: Response) => {
-  const result = await ProductService.deleteProduct(req.params.id);
+  const result = await ProductService.deleteProduct(req.params.id as string);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -62,8 +67,8 @@ const deleteProduct = catchAsync(async (req: Request, res: Response) => {
 
 const adjustVariantStock = catchAsync(async (req: Request, res: Response) => {
   const result = await ProductService.adjustVariantStock(
-    req.params.productId,
-    req.params.variantId,
+    req.params.productId as string,
+    req.params.variantId as string,
     req.body,
   );
 

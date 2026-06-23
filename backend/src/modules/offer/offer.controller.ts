@@ -43,7 +43,10 @@ const getActivePublicOffers = catchAsync(
 );
 
 const updateOffer = catchAsync(async (req: Request, res: Response) => {
-  const result = await OfferService.updateOffer(req.params.id, req.body);
+  const result = await OfferService.updateOffer(
+    req.params.id as string,
+    req.body,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -54,7 +57,7 @@ const updateOffer = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteOffer = catchAsync(async (req: Request, res: Response) => {
-  const result = await OfferService.deleteOffer(req.params.id);
+  const result = await OfferService.deleteOffer(req.params.id as string);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

@@ -20,7 +20,7 @@ const generateProductCopy = catchAsync(async (req: Request, res: Response) => {
 const generateProductCopyFromProduct = catchAsync(
   async (req: Request, res: Response) => {
     const result = await AiService.generateProductCopyFromProduct(
-      req.params.productId,
+      req.params.productId as string,
       req.body,
     );
 
@@ -36,7 +36,7 @@ const generateProductCopyFromProduct = catchAsync(
 const applyAiCopyToProduct = catchAsync(async (req: Request, res: Response) => {
   const result = await AiService.applyAiCopyToProduct(
     req.user!.userId,
-    req.params.productId,
+    req.params.productId as string,
     req.body,
   );
 
