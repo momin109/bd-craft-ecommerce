@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { Types } from "mongoose";
-import type { FilterQuery } from "mongoose";
+import type { QueryFilter } from "mongoose";
 import { NotificationService } from "../notification/notification.service.js";
 
 import { CouponService } from "../coupon/coupon.service.js";
@@ -201,7 +201,7 @@ const checkoutFromCart = async (userId: string, payload: TCheckoutPayload) => {
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, "Customer not found");
   }
-
+  const customerObjectId = new Types.ObjectId(userId);
   if (!user.isMobileVerified) {
     throw new AppError(
       httpStatus.FORBIDDEN,
@@ -288,7 +288,7 @@ const checkoutFromCart = async (userId: string, payload: TCheckoutPayload) => {
     orderNumber: generateOrderNumber(),
     invoiceNumber: generateInvoiceNumber(),
 
-    customer: userId,
+    customer: customerObjectId,
 
     items: orderItems,
 
@@ -302,7 +302,7 @@ const checkoutFromCart = async (userId: string, payload: TCheckoutPayload) => {
       {
         status: "PENDING",
         note: "Order placed by customer",
-        changedBy: userId,
+        changedBy: customerObjectId,
         changedAt: new Date(),
       },
     ],
@@ -314,8 +314,10 @@ const checkoutFromCart = async (userId: string, payload: TCheckoutPayload) => {
     offerDiscount,
     discount,
 
-    coupon: couponResult.coupon?._id,
-    couponCode: couponResult.couponCode,
+    coupon: couponResult.coupon?._id
+      ? (couponResult.coupon._id as Types.ObjectId)
+      : undefined,
+    couponCode: couponResult.couponCode ?? undefined,
 
     appliedOffers: offerResult.appliedOffers,
 
@@ -625,7 +627,7 @@ const getAllOrdersForAdmin = async (query: TOrderQuery) => {
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const filter: FilterQuery<IOrder> = {};
+  const filter: QueryFilter<IOrder> = {};
 
   if (query.status) {
     filter.orderStatus = query.status;

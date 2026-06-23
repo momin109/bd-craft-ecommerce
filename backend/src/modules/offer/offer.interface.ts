@@ -29,7 +29,7 @@ export interface IBundleOffer {
 }
 
 export interface IOfferCampaign {
-  _id?: Types.ObjectId;
+  _id: Types.ObjectId;
   code: string;
   title: string;
   description?: string;

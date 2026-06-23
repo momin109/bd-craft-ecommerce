@@ -1,4 +1,4 @@
-import { FilterQuery } from "mongoose";
+import { QueryFilter } from "mongoose";
 import { AppError } from "../../errors/AppError.js";
 import { httpStatus } from "../../constants/httpStatus.js";
 import { createSlug } from "../../utils/createSlug.js";
@@ -66,7 +66,7 @@ const getAllProducts = async (query: TProductQuery) => {
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const filter: FilterQuery<IProduct> = {};
+  const filter: QueryFilter<IProduct> = {};
 
   if (query.status) {
     filter.status = query.status;
