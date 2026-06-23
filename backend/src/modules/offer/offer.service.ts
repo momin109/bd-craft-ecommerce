@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-
+import type { QueryFilter } from "mongoose";
 import { AppError } from "../../errors/AppError.js";
 import { httpStatus } from "../../constants/httpStatus.js";
 
@@ -31,7 +31,7 @@ const normalizeOfferCode = (code: string) => {
   return code.trim().toUpperCase();
 };
 
-const getActiveOfferFilter = () => {
+const getActiveOfferFilter = (): QueryFilter<IOfferCampaign> => {
   const now = new Date();
 
   return {

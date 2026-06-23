@@ -1,5 +1,7 @@
 {
   "name": "ecommerce-backend",
+  "module": "NodeNext",
+  "moduleResolution": "NodeNext",
   "version": "1.0.0",
   "type": "module",
   "description": "",

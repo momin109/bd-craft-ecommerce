@@ -1,4 +1,4 @@
-import { FilterQuery } from "mongoose";
+import { QueryFilter } from "mongoose";
 
 import { AppError } from "../../errors/AppError.js";
 import { httpStatus } from "../../constants/httpStatus.js";
@@ -104,7 +104,7 @@ const getAllCustomersForAdmin = async (query: TCustomerQuery) => {
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const filter: FilterQuery<IUser> = {
+  const filter: QueryFilter<IUser> = {
     role: "CUSTOMER",
     status: {
       $ne: "DELETED",

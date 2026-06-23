@@ -1,7 +1,12 @@
-import { FilterQuery } from "mongoose";
+import { QueryFilter } from "mongoose";
 
 import { Order } from "../order/order.model.js";
-import { IOrder } from "../order/order.interface.js";
+import {
+  IOrder,
+  TOrderStatus,
+  TPaymentMethod,
+  TCourierProvider,
+} from "../order/order.interface.js";
 
 import {
   convertToCsv,
@@ -264,7 +269,7 @@ const getDashboardSummary = async () => {
 const buildBaseOrderFilter = (query: TReportQuery) => {
   const { fromDate, toDate } = getDateRange(query);
 
-  const filter: FilterQuery<IOrder> = {
+  const filter: QueryFilter<IOrder> = {
     createdAt: {
       $gte: fromDate,
       $lte: toDate,
@@ -272,15 +277,15 @@ const buildBaseOrderFilter = (query: TReportQuery) => {
   };
 
   if (query.status) {
-    filter.orderStatus = query.status;
+    filter.orderStatus = query.status as TOrderStatus;
   }
 
   if (query.paymentMethod) {
-    filter.paymentMethod = query.paymentMethod;
+    filter.paymentMethod = query.paymentMethod as TPaymentMethod;
   }
 
   if (query.provider) {
-    filter["courier.provider"] = query.provider;
+    filter["courier.provider"] = query.provider as TCourierProvider;
   }
 
   return filter;

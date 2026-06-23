@@ -1,4 +1,4 @@
-import { FilterQuery, Types } from "mongoose";
+import { QueryFilter, Types } from "mongoose";
 
 import { AppError } from "../../errors/AppError.js";
 import { httpStatus } from "../../constants/httpStatus.js";
@@ -133,7 +133,7 @@ const getProductReviews = async (
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const filter: FilterQuery<IReview> = {
+  const filter: QueryFilter<IReview> = {
     product: productId,
     status: "APPROVED",
   };
@@ -180,7 +180,7 @@ const getAllReviewsForAdmin = async (query: {
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const filter: FilterQuery<IReview> = {};
+  const filter: QueryFilter<IReview> = {};
 
   if (query.status) {
     filter.status = query.status;

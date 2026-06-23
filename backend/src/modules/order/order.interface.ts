@@ -57,6 +57,7 @@ export interface IOrderStatusLog {
 }
 
 export interface IOrder {
+  _id?: Types.ObjectId;
   orderNumber: string;
   invoiceNumber: string;
 
