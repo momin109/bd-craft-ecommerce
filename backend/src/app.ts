@@ -14,12 +14,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 export const app = express();
 
-// app.use(
-//   cors({
-//     origin: env.clientUrl,
-//     credentials: true,
-//   }),
-// );
+// added customer url and admin url
 
 const allowedOrigins = (process.env.CLIENT_URL ?? "")
   .split(",")
