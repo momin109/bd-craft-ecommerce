@@ -20,18 +20,23 @@ export const app = express();
 //     credentials: true,
 //   }),
 // );
+
+const allowedOrigins = (process.env.CLIENT_URL ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
     origin: function (origin, callback) {
       console.log("Request Origin:", origin);
-      console.log("Allowed Origins:", env.clientUrl);
+      console.log("Allowed Origins:", allowedOrigins);
 
-      // Postman / mobile app / server-to-server request
-      if (!origin) {
-        return callback(null, true);
-      }
+      // allow Postman / server-to-server
+      if (!origin) return callback(null, true);
 
-      if (env.clientUrl.includes(origin)) {
+      // strict match
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
