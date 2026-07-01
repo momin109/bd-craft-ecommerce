@@ -4,11 +4,8 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "example.com",
+        hostname: "bd-craft-ecommerce.onrender.com",
       },
-      // future e ekhane tomar real image host add korba, e.g.:
-      // { protocol: 'https', hostname: 'res.cloudinary.com' },
-      // { protocol: 'https', hostname: 'your-bucket.s3.amazonaws.com' },
     ],
   },
 };
