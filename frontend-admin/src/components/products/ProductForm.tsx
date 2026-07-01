@@ -16,6 +16,8 @@ import {
 import { getCategoryId } from "@/types/api/category";
 import { getErrorMessage } from "@/lib/api/client";
 import toast from "react-hot-toast";
+import { uploadService } from "@/services/upload.service";
+// import { uploadService } from "@/services/uploadService";
 
 interface Props {
   mode: "create" | "edit";
@@ -57,7 +59,7 @@ export default function ProductForm({ mode, productId, initial }: Props) {
   );
   const [brand, setBrand] = useState(initial?.brand ?? "");
   const [images, setImages] = useState<string[]>(initial?.images ?? []);
-  const [imageInput, setImageInput] = useState("");
+  // const [imageInput, setImageInput] = useState("");
   const [basePurchasePrice, setBasePurchasePrice] = useState(
     initial?.basePurchasePrice ?? 0,
   );
@@ -85,12 +87,46 @@ export default function ProductForm({ mode, productId, initial }: Props) {
       v.map((row, idx) => (idx === i ? { ...row, ...patch } : row)),
     );
 
-  const addImage = () => {
-    if (imageInput.trim()) {
-      setImages((arr) => [...arr, imageInput.trim()]);
-      setImageInput("");
+  // image file upload
+
+  // image file upload
+  const uploadImageFile = async (file: File) => {
+    try {
+      const res = await uploadService.uploadSingle(file);
+
+      // debug — ekbar console e dekho asol shape ki (fix hoye gele muche felo)
+      console.log("Upload response:", res);
+
+      // Cloudinary / backend jei shape ei URL rakhuk, ekhane dhore felbe
+      const url =
+        (res as any)?.data?.secure_url ??
+        (res as any)?.data?.url ??
+        (res as any)?.secure_url ??
+        (res as any)?.url ??
+        (res as any)?.data?.data?.url ??
+        (res as any)?.data?.data?.secure_url;
+
+      if (!url) {
+        console.error("No URL in upload response:", res);
+        toast.error("Upload failed — no image URL returned");
+        return;
+      }
+      console.log("Stored URL:", url);
+      setImages((prev) => [...prev, url]);
+      toast.success("Image uploaded");
+    } catch (err) {
+      console.error("Upload error:", err);
+      toast.error("Upload failed");
     }
   };
+
+  // const addImage = () => {
+  //   if (imageInput.trim()) {
+  //     setImages((arr) => [...arr, imageInput.trim()]);
+  //     setImageInput("");
+  //   }
+  // };
+
   const removeImage = (i: number) =>
     setImages((arr) => arr.filter((_, idx) => idx !== i));
 
@@ -281,7 +317,7 @@ export default function ProductForm({ mode, productId, initial }: Props) {
       <div className="bg-white border border-gray-100 rounded-2xl p-6">
         <h3 className="font-semibold text-gray-800 mb-4">Images *</h3>
         <div className="flex gap-2 mb-3">
-          <input
+          {/* <input
             value={imageInput}
             onChange={(e) => setImageInput(e.target.value)}
             onKeyDown={(e) => {
@@ -292,13 +328,27 @@ export default function ProductForm({ mode, productId, initial }: Props) {
             }}
             placeholder="https://example.com/image.jpg"
             className="flex-1 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400"
+          /> */}
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={async (e) => {
+              const files = e.target.files;
+              if (!files) return;
+
+              for (let i = 0; i < files.length; i++) {
+                await uploadImageFile(files[i]);
+              }
+            }}
+            className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm"
           />
-          <button
+          {/* <button
             onClick={addImage}
             className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-1.5"
           >
             <ImagePlus size={15} /> Add
-          </button>
+          </button> */}
         </div>
         {images.length > 0 && (
           <div className="flex flex-wrap gap-2">
