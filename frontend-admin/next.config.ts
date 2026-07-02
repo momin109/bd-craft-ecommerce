@@ -4,7 +4,8 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "bd-craft-ecommerce.onrender.com",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
       },
     ],
   },
