@@ -1,3 +1,5 @@
+console.log("✅ NEXT CONFIG LOADED FROM FRONTEND-USER");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
