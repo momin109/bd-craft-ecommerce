@@ -137,6 +137,7 @@ export default function CartPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => {
+            console.log("cart stor ok", item);
             const itemId = getCartItemId(item);
             const price = item.variant?.sellingPrice ?? 0;
             return (

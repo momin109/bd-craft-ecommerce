@@ -6,15 +6,15 @@ import { useCategories } from "@/hooks/queries/useCategories";
 // Fallback static images keyed by likely category slugs — used only if backend category has no image
 const FALLBACK_IMAGES: Record<string, string> = {
   women:
-    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=85",
-  men: "https://images.unsplash.com/photo-1617137968427-85924c800a22?w=600&q=85",
-  kids: "https://images.unsplash.com/photo-1560472355-536de3962603?w=600&q=85",
+    "https://res.cloudinary.com/photo-1610030469983-98e550d6193c?w=600&q=85",
+  men: "https://res.cloudinary.com/photo-1617137968427-85924c800a22?w=600&q=85",
+  kids: "https://res.cloudinary.com/photo-1560472355-536de3962603?w=600&q=85",
   "home-living":
-    "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=85",
+    "https://res.cloudinary.com/photo-1555041469-a586c61ea9bc?w=600&q=85",
   jewellery:
-    "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&q=85",
+    "https://res.cloudinary.com/photo-1599643478518-a784e5dc4c8f?w=600&q=85",
   beauty:
-    "https://images.unsplash.com/photo-1586495777744-4e6232bf4668?w=600&q=85",
+    "https://res.cloudinary.com/photo-1586495777744-4e6232bf4668?w=600&q=85",
 };
 
 export default function AarongShowcase() {
@@ -60,7 +60,7 @@ export default function AarongShowcase() {
                   src={
                     cat.image ||
                     FALLBACK_IMAGES[cat.slug] ||
-                    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=85"
+                    "https://res.cloudinary.com/photo-1610030469983-98e550d6193c?w=600&q=85"
                   }
                   alt={cat.name}
                   fill
