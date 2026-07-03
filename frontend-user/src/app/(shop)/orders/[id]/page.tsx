@@ -14,9 +14,17 @@ import {
 import { formatPriceBDT, cn } from "@/lib/utils";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useMyOrders } from "@/hooks/queries/useOrders";
-import { getOrderId } from "@/types/api/order";
+// import { getOrderId } from "@/types/api/order";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { EmptyState } from "@/components/shared/EmptyState";
+import {
+  getOrderId,
+  getOrderItemId,
+  getOrderItemImage,
+  getOrderItemName,
+  getOrderItemTotal,
+  getOrderItemUnitPrice,
+} from "@/types/api/order";
 
 const STEP_ORDER = [
   "PENDING",
@@ -146,39 +154,51 @@ function OrderDetailContent() {
               Order Items ({order.items.length})
             </h3>
             <div className="space-y-4">
-              {order.items.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 pb-3 border-b border-gray-50 last:border-none last:pb-0"
-                >
+              {order.items.map((item, index) => {
+                const itemName = getOrderItemName(item);
+                const itemImage = getOrderItemImage(item);
+                const unitPrice = getOrderItemUnitPrice(item);
+                const itemTotal = getOrderItemTotal(item);
+
+                return (
                   <div
-                    className="relative w-14 shrink-0 rounded-xl overflow-hidden bg-brand-50"
-                    style={{ height: "72px" }}
+                    key={getOrderItemId(item, index)}
+                    className="flex items-center gap-3"
                   >
-                    {item.image && (
-                      <Image
-                        src={item.image}
-                        alt={item.productName}
-                        fill
-                        sizes="56px"
-                        className="object-cover"
-                      />
-                    )}
+                    <div className="relative w-14 h-16 rounded-lg overflow-hidden bg-brand-50 shrink-0">
+                      {itemImage && (
+                        <Image
+                          src={itemImage}
+                          alt={itemName}
+                          fill
+                          sizes="56px"
+                          className="object-cover"
+                        />
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">
+                        {itemName}
+                      </p>
+
+                      <p className="text-xs text-gray-400">
+                        Qty: {item.quantity}
+                        {item.size ? ` • Size: ${item.size}` : ""}
+                        {item.color ? ` • ${item.color}` : ""}
+                      </p>
+
+                      <p className="text-xs text-gray-400">
+                        Unit Price: {formatPriceBDT(unitPrice)}
+                      </p>
+                    </div>
+
+                    <span className="text-sm font-semibold text-brand-700">
+                      {formatPriceBDT(itemTotal)}
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">
-                      {item.productName}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {item.size ? `Size: ${item.size} · ` : ""}
-                      {item.color ? `${item.color} · ` : ""}Qty: {item.quantity}
-                    </p>
-                  </div>
-                  <span className="text-sm font-bold text-brand-700">
-                    {formatPriceBDT(item.subtotal)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
