@@ -20,6 +20,14 @@ import { formatPriceBDT, cn } from "@/lib/utils";
 import { PaymentMethod, ApiOrder } from "@/types/api/order";
 import { getErrorMessage } from "@/lib/api/client";
 import { LoadingState } from "@/components/shared/LoadingState";
+import {
+  getCartItemId,
+  getCartProductImage,
+  getCartProductName,
+  getCartUnitPrice,
+  getCartVariantSize,
+} from "@/types/api/cart";
+
 import toast from "react-hot-toast";
 
 const PAYMENT_METHODS: { id: PaymentMethod; label: string; logo: string }[] = [
@@ -76,7 +84,7 @@ function CheckoutContent() {
   const subtotal =
     cart?.subtotal ??
     items.reduce(
-      (sum, i) => sum + (i.variant?.sellingPrice ?? 0) * i.quantity,
+      (sum, item) => sum + getCartUnitPrice(item) * item.quantity,
       0,
     );
   const shippingCharge = 120;
@@ -446,37 +454,48 @@ function CheckoutContent() {
                   {items.length})
                 </h3>
                 <div className="space-y-3">
-                  {items.map((item, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-brand-50 shrink-0">
-                        {item.product?.images?.[0] && (
-                          <Image
-                            src={item.product.images[0]}
-                            alt={item.product.name}
-                            fill
-                            sizes="48px"
-                            className="object-cover"
-                          />
-                        )}
+                  {items.map((item, i) => {
+                    const productImage = getCartProductImage(item);
+                    const productName = getCartProductName(item);
+                    const variantSize = getCartVariantSize(item);
+                    const itemTotal =
+                      typeof item.itemTotal === "number"
+                        ? item.itemTotal
+                        : getCartUnitPrice(item) * item.quantity;
+
+                    return (
+                      <div
+                        key={getCartItemId(item) || i}
+                        className="flex items-center gap-3"
+                      >
+                        <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-brand-50 shrink-0">
+                          {productImage && (
+                            <Image
+                              src={productImage}
+                              alt={productName}
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                            />
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate">
+                            {productName}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Qty: {item.quantity}{" "}
+                            {variantSize ? `• Size: ${variantSize}` : ""}
+                          </p>
+                        </div>
+
+                        <span className="text-sm font-semibold text-brand-700">
+                          {formatPriceBDT(itemTotal)}
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">
-                          {item.product?.name}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          Qty: {item.quantity}{" "}
-                          {item.variant?.size
-                            ? `• Size: ${item.variant.size}`
-                            : ""}
-                        </p>
-                      </div>
-                      <span className="text-sm font-semibold text-brand-700">
-                        {formatPriceBDT(
-                          (item.variant?.sellingPrice ?? 0) * item.quantity,
-                        )}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -514,32 +533,45 @@ function CheckoutContent() {
               Order Summary
             </h3>
             <div className="space-y-3 max-h-56 overflow-y-auto mb-4">
-              {items.map((item, i) => (
-                <div key={i} className="flex items-center gap-2.5">
-                  <div className="relative w-10 h-12 rounded-lg overflow-hidden bg-brand-50 shrink-0">
-                    {item.product?.images?.[0] && (
-                      <Image
-                        src={item.product.images[0]}
-                        alt=""
-                        fill
-                        sizes="40px"
-                        className="object-cover"
-                      />
-                    )}
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-600 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
-                      {item.quantity}
+              {items.map((item, i) => {
+                const productImage = getCartProductImage(item);
+                const productName = getCartProductName(item);
+                const itemTotal =
+                  typeof item.itemTotal === "number"
+                    ? item.itemTotal
+                    : getCartUnitPrice(item) * item.quantity;
+
+                return (
+                  <div
+                    key={getCartItemId(item) || i}
+                    className="flex items-center gap-2.5"
+                  >
+                    <div className="relative w-10 h-12 rounded-lg overflow-hidden bg-brand-50 shrink-0">
+                      {productImage && (
+                        <Image
+                          src={productImage}
+                          alt={productName}
+                          fill
+                          sizes="40px"
+                          className="object-cover"
+                        />
+                      )}
+
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-600 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
+                        {item.quantity}
+                      </span>
+                    </div>
+
+                    <span className="flex-1 text-xs text-gray-600 line-clamp-2">
+                      {productName}
+                    </span>
+
+                    <span className="text-xs font-semibold text-gray-800 shrink-0">
+                      {formatPriceBDT(itemTotal)}
                     </span>
                   </div>
-                  <span className="flex-1 text-xs text-gray-600 line-clamp-2">
-                    {item.product?.name}
-                  </span>
-                  <span className="text-xs font-semibold text-gray-800 shrink-0">
-                    {formatPriceBDT(
-                      (item.variant?.sellingPrice ?? 0) * item.quantity,
-                    )}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="space-y-2 text-sm pt-3 border-t border-gray-100">
               <div className="flex justify-between text-gray-500">
