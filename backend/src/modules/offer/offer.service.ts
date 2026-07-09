@@ -1,5 +1,6 @@
-import { Types } from "mongoose";
-import type { QueryFilter } from "mongoose";
+import mongoose, { Types } from "mongoose";
+import type { ClientSession, QueryFilter } from "mongoose";
+
 import { AppError } from "../../errors/AppError.js";
 import { httpStatus } from "../../constants/httpStatus.js";
 
@@ -8,6 +9,7 @@ import { Cart } from "../cart/cart.model.js";
 import {
   IAppliedOffer,
   IOfferCampaign,
+  TOfferStatus,
   TOfferType,
 } from "./offer.interface.js";
 
@@ -15,7 +17,7 @@ import { OfferCampaign, OfferRedemption } from "./offer.model.js";
 
 type TOfferCartItem = {
   product: Types.ObjectId;
-  variantId: Types.ObjectId;
+  variantId?: Types.ObjectId;
   quantity: number;
   unitPrice: number;
   itemTotal: number;
@@ -27,8 +29,56 @@ type TCalculateOfferPayload = {
   items: TOfferCartItem[];
 };
 
+type TFlashSaleItemWithRules = IOfferCampaign["flashSaleItems"][number] & {
+  regularPrice?: number;
+  perUserLimit?: number;
+  status?: "ACTIVE" | "INACTIVE";
+};
+
+const ACTIVE_CONFLICT_STATUSES: readonly TOfferStatus[] = [
+  "ACTIVE",
+  "SCHEDULED",
+];
+
+const OFFER_STATUSES: readonly TOfferStatus[] = [
+  "DRAFT",
+  "SCHEDULED",
+  "ACTIVE",
+  "PAUSED",
+  "EXPIRED",
+  "INACTIVE",
+];
+
+const isOfferStatus = (status: unknown): status is TOfferStatus => {
+  return (
+    typeof status === "string" &&
+    OFFER_STATUSES.includes(status as TOfferStatus)
+  );
+};
+
 const normalizeOfferCode = (code: string) => {
   return code.trim().toUpperCase();
+};
+
+const parseDateOrThrow = (value: unknown, fieldName: string) => {
+  const date = new Date(String(value));
+
+  if (Number.isNaN(date.getTime())) {
+    throw new AppError(httpStatus.BAD_REQUEST, `${fieldName} is invalid`);
+  }
+
+  return date;
+};
+
+const getItemKey = (product: unknown, variantId?: unknown) => {
+  return `${String(product)}:${String(variantId || "")}`;
+};
+
+const isActiveConflictStatus = (status: unknown): status is TOfferStatus => {
+  return (
+    typeof status === "string" &&
+    ACTIVE_CONFLICT_STATUSES.includes(status as TOfferStatus)
+  );
 };
 
 const getActiveOfferFilter = (): QueryFilter<IOfferCampaign> => {
@@ -58,7 +108,7 @@ const getActiveOfferFilter = (): QueryFilter<IOfferCampaign> => {
 };
 
 const getActiveCampaigns = async (type?: TOfferType) => {
-  const filter: Record<string, unknown> = getActiveOfferFilter();
+  const filter: QueryFilter<IOfferCampaign> = getActiveOfferFilter();
 
   if (type) {
     filter.type = type;
@@ -72,11 +122,196 @@ const getActiveCampaigns = async (type?: TOfferType) => {
   return campaigns;
 };
 
-const getItemKey = (product: unknown, variantId?: unknown) => {
-  return `${String(product)}:${String(variantId || "")}`;
+const validateOfferDateRange = (startDate: Date, endDate: Date) => {
+  if (endDate <= startDate) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "End date must be greater than start date",
+    );
+  }
+};
+
+const validateFlashSaleItemsBasicRules = (
+  flashSaleItems: TFlashSaleItemWithRules[],
+) => {
+  if (!flashSaleItems.length) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Flash sale needs at least one product",
+    );
+  }
+
+  const itemKeys = new Set<string>();
+
+  for (const item of flashSaleItems) {
+    if (!item.product) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Product is required");
+    }
+
+    if (Number(item.flashPrice) <= 0) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Flash price must be greater than 0",
+      );
+    }
+
+    if (
+      typeof item.regularPrice === "number" &&
+      item.regularPrice > 0 &&
+      item.flashPrice >= item.regularPrice
+    ) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Flash price must be lower than regular price",
+      );
+    }
+
+    if (
+      item.stockLimit &&
+      item.perUserLimit &&
+      item.perUserLimit > item.stockLimit
+    ) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Per user limit cannot be greater than stock limit",
+      );
+    }
+
+    const key = getItemKey(item.product, item.variantId);
+
+    if (itemKeys.has(key)) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Duplicate product/variant found in flash sale items",
+      );
+    }
+
+    itemKeys.add(key);
+  }
+};
+
+const ensureNoOverlappingFlashSale = async (payload: {
+  flashSaleItems: TFlashSaleItemWithRules[];
+  startDate: Date;
+  endDate: Date;
+  excludeOfferId?: string;
+}) => {
+  for (const item of payload.flashSaleItems) {
+    if (item.status === "INACTIVE") {
+      continue;
+    }
+
+    const elemMatch: Record<string, unknown> = {
+      product: item.product,
+      status: {
+        $ne: "INACTIVE",
+      },
+    };
+
+    if (item.variantId) {
+      elemMatch.$or = [
+        {
+          variantId: item.variantId,
+        },
+        {
+          variantId: {
+            $exists: false,
+          },
+        },
+        {
+          variantId: null,
+        },
+      ];
+    }
+
+    const filter: QueryFilter<IOfferCampaign> = {
+      type: "FLASH_SALE",
+      status: {
+        $in: ACTIVE_CONFLICT_STATUSES,
+      },
+      startDate: {
+        $lt: payload.endDate,
+      },
+      endDate: {
+        $gt: payload.startDate,
+      },
+      flashSaleItems: {
+        $elemMatch: elemMatch,
+      },
+    };
+
+    if (payload.excludeOfferId) {
+      filter._id = {
+        $ne: new Types.ObjectId(payload.excludeOfferId),
+      };
+    }
+
+    const existingOffer = await OfferCampaign.findOne(filter).select(
+      "code title startDate endDate",
+    );
+
+    if (existingOffer) {
+      throw new AppError(
+        httpStatus.CONFLICT,
+        `This product already exists in another active/scheduled flash sale: ${existingOffer.code}`,
+      );
+    }
+  }
+};
+
+const getCustomerFlashItemUsedQty = async (payload: {
+  customerId: string;
+  offerId: Types.ObjectId;
+  productId: Types.ObjectId;
+  variantId?: Types.ObjectId;
+  session?: ClientSession;
+}) => {
+  const itemMatch: Record<string, unknown> = {
+    "items.product": payload.productId,
+  };
+
+  if (payload.variantId) {
+    itemMatch["items.variantId"] = payload.variantId;
+  }
+
+  const aggregate = OfferRedemption.aggregate([
+    {
+      $match: {
+        offer: payload.offerId,
+        customer: new Types.ObjectId(payload.customerId),
+        type: "FLASH_SALE",
+        releasedAt: {
+          $exists: false,
+        },
+      },
+    },
+    {
+      $unwind: "$items",
+    },
+    {
+      $match: itemMatch,
+    },
+    {
+      $group: {
+        _id: null,
+        totalQty: {
+          $sum: "$items.quantity",
+        },
+      },
+    },
+  ]);
+
+  if (payload.session) {
+    aggregate.session(payload.session);
+  }
+
+  const result = await aggregate;
+
+  return result[0]?.totalQty || 0;
 };
 
 const calculateFlashSaleOffers = async (
+  userId: string,
   campaigns: IOfferCampaign[],
   items: TOfferCartItem[],
 ) => {
@@ -86,14 +321,20 @@ const calculateFlashSaleOffers = async (
   for (const item of items) {
     let bestOffer: {
       campaign: IOfferCampaign;
-      flashItem: any;
+      flashItem: TFlashSaleItemWithRules;
       eligibleQuantity: number;
       discountAmount: number;
       offerUnitPrice: number;
     } | null = null;
 
     for (const campaign of campaigns) {
-      for (const flashItem of campaign.flashSaleItems) {
+      for (const rawFlashItem of campaign.flashSaleItems) {
+        const flashItem = rawFlashItem as TFlashSaleItemWithRules;
+
+        if (flashItem.status === "INACTIVE") {
+          continue;
+        }
+
         const productMatched =
           String(flashItem.product) === String(item.product);
 
@@ -118,11 +359,32 @@ const calculateFlashSaleOffers = async (
             continue;
           }
 
-          eligibleQuantity = Math.min(item.quantity, remaining);
+          eligibleQuantity = Math.min(eligibleQuantity, remaining);
+        }
+
+        if (flashItem.perUserLimit) {
+          const alreadyUsedQty = await getCustomerFlashItemUsedQty({
+            customerId: userId,
+            offerId: campaign._id,
+            productId: item.product,
+            variantId: flashItem.variantId ? item.variantId : undefined,
+          });
+
+          const userRemainingQty = flashItem.perUserLimit - alreadyUsedQty;
+
+          if (userRemainingQty <= 0) {
+            continue;
+          }
+
+          eligibleQuantity = Math.min(eligibleQuantity, userRemainingQty);
         }
 
         const discountAmount =
           (item.unitPrice - flashItem.flashPrice) * eligibleQuantity;
+
+        if (discountAmount <= 0) {
+          continue;
+        }
 
         if (!bestOffer || discountAmount > bestOffer.discountAmount) {
           bestOffer = {
@@ -200,7 +462,6 @@ const calculateBundleOffers = async (
   flashDiscountedKeys: Set<string>,
 ) => {
   const appliedOffers: IAppliedOffer[] = [];
-
   const itemMap = new Map<string, TOfferCartItem>();
 
   for (const item of items) {
@@ -216,7 +477,10 @@ const calculateBundleOffers = async (
     let bundleCount = Infinity;
     let bundleSubtotal = 0;
 
-    const appliedItems = [];
+    const appliedItems: {
+      cartItem: TOfferCartItem;
+      requiredQuantity: number;
+    }[] = [];
 
     for (const requiredItem of campaign.bundle.items) {
       const exactKey = getItemKey(requiredItem.product, requiredItem.variantId);
@@ -270,6 +534,7 @@ const calculateBundleOffers = async (
     const finalAppliedItems = appliedItems.map((item) => {
       const quantity = item.requiredQuantity * bundleCount;
       const itemSubtotal = item.cartItem.unitPrice * quantity;
+
       bundleSubtotal += itemSubtotal;
 
       return {
@@ -317,6 +582,7 @@ const calculateOfferDiscount = async (payload: TCalculateOfferPayload) => {
   ]);
 
   const flashResult = await calculateFlashSaleOffers(
+    payload.userId,
     flashCampaigns,
     payload.items,
   );
@@ -363,7 +629,7 @@ const previewCartOffers = async (userId: string) => {
   return {
     subtotal: cart.subtotal,
     offerDiscount: result.offerDiscount,
-    totalAfterOffer: cart.subtotal - result.offerDiscount,
+    totalAfterOffer: Math.max(0, cart.subtotal - result.offerDiscount),
     appliedOffers: result.appliedOffers,
   };
 };
@@ -377,105 +643,206 @@ const recordOfferUsage = async (payload: {
     return [];
   }
 
-  const redemptions = [];
+  const session = await mongoose.startSession();
 
-  for (const appliedOffer of payload.appliedOffers) {
-    const redemption = await OfferRedemption.create({
-      offer: appliedOffer.offer,
-      code: appliedOffer.code,
-      type: appliedOffer.type,
-      customer: payload.customerId,
-      order: payload.orderId,
-      discountAmount: appliedOffer.discountAmount,
-      items: appliedOffer.items,
-      usedAt: new Date(),
-    });
+  try {
+    const redemptions: unknown[] = [];
 
-    await OfferCampaign.findByIdAndUpdate(appliedOffer.offer, {
-      $inc: {
-        usedCount: 1,
-      },
-    });
+    await session.withTransaction(async () => {
+      const now = new Date();
 
-    if (appliedOffer.type === "FLASH_SALE") {
-      const offer = await OfferCampaign.findById(appliedOffer.offer);
+      for (const appliedOffer of payload.appliedOffers) {
+        const offer = await OfferCampaign.findById(appliedOffer.offer).session(
+          session,
+        );
 
-      if (offer) {
-        for (const appliedItem of appliedOffer.items) {
-          const flashItem = offer.flashSaleItems.find((item) => {
-            const productMatched =
-              String(item.product) === String(appliedItem.product);
+        if (!offer) {
+          throw new AppError(httpStatus.NOT_FOUND, "Offer not found");
+        }
 
-            const variantMatched =
-              !item.variantId ||
-              String(item.variantId) === String(appliedItem.variantId);
+        if (offer.status !== "ACTIVE") {
+          throw new AppError(httpStatus.BAD_REQUEST, "Offer is not active");
+        }
 
-            return productMatched && variantMatched;
-          });
+        if (offer.startDate > now || offer.endDate < now) {
+          throw new AppError(
+            httpStatus.BAD_REQUEST,
+            "Offer is not valid at this time",
+          );
+        }
 
-          if (flashItem) {
+        if (offer.usageLimit && offer.usedCount >= offer.usageLimit) {
+          throw new AppError(
+            httpStatus.BAD_REQUEST,
+            "Offer usage limit exceeded",
+          );
+        }
+
+        if (appliedOffer.type === "FLASH_SALE") {
+          for (const appliedItem of appliedOffer.items) {
+            const flashItem = offer.flashSaleItems.find((rawItem) => {
+              const item = rawItem as TFlashSaleItemWithRules;
+
+              const productMatched =
+                String(item.product) === String(appliedItem.product);
+
+              const variantMatched =
+                !item.variantId ||
+                String(item.variantId) === String(appliedItem.variantId);
+
+              return productMatched && variantMatched;
+            }) as TFlashSaleItemWithRules | undefined;
+
+            if (!flashItem) {
+              throw new AppError(
+                httpStatus.BAD_REQUEST,
+                "Flash sale item not found",
+              );
+            }
+
+            if (flashItem.status === "INACTIVE") {
+              throw new AppError(
+                httpStatus.BAD_REQUEST,
+                "Flash sale item is inactive",
+              );
+            }
+
+            if (flashItem.stockLimit) {
+              const remaining = flashItem.stockLimit - flashItem.soldCount;
+
+              if (remaining < appliedItem.quantity) {
+                throw new AppError(
+                  httpStatus.BAD_REQUEST,
+                  "Flash sale stock is not available",
+                );
+              }
+            }
+
+            if (flashItem.perUserLimit) {
+              const alreadyUsedQty = await getCustomerFlashItemUsedQty({
+                customerId: payload.customerId,
+                offerId: offer._id,
+                productId: appliedItem.product,
+                variantId: flashItem.variantId
+                  ? appliedItem.variantId
+                  : undefined,
+                session,
+              });
+
+              if (
+                alreadyUsedQty + appliedItem.quantity >
+                flashItem.perUserLimit
+              ) {
+                throw new AppError(
+                  httpStatus.BAD_REQUEST,
+                  "Per user flash sale limit exceeded",
+                );
+              }
+            }
+
             flashItem.soldCount += appliedItem.quantity;
           }
         }
 
-        await offer.save();
+        offer.usedCount += 1;
+
+        await offer.save({
+          session,
+        });
+
+        const createdRedemptions = await OfferRedemption.create(
+          [
+            {
+              offer: appliedOffer.offer,
+              code: appliedOffer.code,
+              type: appliedOffer.type,
+              customer: payload.customerId,
+              order: payload.orderId,
+              discountAmount: appliedOffer.discountAmount,
+              items: appliedOffer.items,
+              usedAt: new Date(),
+            },
+          ],
+          {
+            session,
+          },
+        );
+
+        redemptions.push(createdRedemptions[0]);
       }
-    }
+    });
 
-    redemptions.push(redemption);
+    return redemptions;
+  } finally {
+    await session.endSession();
   }
-
-  return redemptions;
 };
 
 const releaseOfferUsageByOrder = async (orderId: string) => {
-  const redemptions = await OfferRedemption.find({
-    order: orderId,
-    releasedAt: {
-      $exists: false,
-    },
-  });
+  const session = await mongoose.startSession();
 
-  for (const redemption of redemptions) {
-    await OfferCampaign.findByIdAndUpdate(redemption.offer, {
-      $inc: {
-        usedCount: -1,
-      },
-    });
+  try {
+    const releasedRedemptions: unknown[] = [];
 
-    if (redemption.type === "FLASH_SALE") {
-      const offer = await OfferCampaign.findById(redemption.offer);
+    await session.withTransaction(async () => {
+      const redemptions = await OfferRedemption.find({
+        order: orderId,
+        releasedAt: {
+          $exists: false,
+        },
+      }).session(session);
 
-      if (offer) {
-        for (const redeemedItem of redemption.items) {
-          const flashItem = offer.flashSaleItems.find((item) => {
-            const productMatched =
-              String(item.product) === String(redeemedItem.product);
+      for (const redemption of redemptions) {
+        const offer = await OfferCampaign.findById(redemption.offer).session(
+          session,
+        );
 
-            const variantMatched =
-              !item.variantId ||
-              String(item.variantId) === String(redeemedItem.variantId);
+        if (offer) {
+          offer.usedCount = Math.max(0, offer.usedCount - 1);
 
-            return productMatched && variantMatched;
-          });
+          if (redemption.type === "FLASH_SALE") {
+            for (const redeemedItem of redemption.items) {
+              const flashItem = offer.flashSaleItems.find((rawItem) => {
+                const item = rawItem as TFlashSaleItemWithRules;
 
-          if (flashItem) {
-            flashItem.soldCount = Math.max(
-              0,
-              flashItem.soldCount - redeemedItem.quantity,
-            );
+                const productMatched =
+                  String(item.product) === String(redeemedItem.product);
+
+                const variantMatched =
+                  !item.variantId ||
+                  String(item.variantId) === String(redeemedItem.variantId);
+
+                return productMatched && variantMatched;
+              }) as TFlashSaleItemWithRules | undefined;
+
+              if (flashItem) {
+                flashItem.soldCount = Math.max(
+                  0,
+                  flashItem.soldCount - redeemedItem.quantity,
+                );
+              }
+            }
           }
+
+          await offer.save({
+            session,
+          });
         }
 
-        await offer.save();
+        redemption.releasedAt = new Date();
+
+        await redemption.save({
+          session,
+        });
+
+        releasedRedemptions.push(redemption);
       }
-    }
+    });
 
-    redemption.releasedAt = new Date();
-    await redemption.save();
+    return releasedRedemptions;
+  } finally {
+    await session.endSession();
   }
-
-  return redemptions;
 };
 
 const createOffer = async (
@@ -492,13 +859,24 @@ const createOffer = async (
     throw new AppError(httpStatus.CONFLICT, "Offer code already exists");
   }
 
-  if (
-    new Date(String(payload.endDate)) <= new Date(String(payload.startDate))
-  ) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "End date must be greater than start date",
-    );
+  const startDate = parseDateOrThrow(payload.startDate, "Start date");
+  const endDate = parseDateOrThrow(payload.endDate, "End date");
+
+  validateOfferDateRange(startDate, endDate);
+
+  if (payload.type === "FLASH_SALE") {
+    const flashSaleItems = (payload.flashSaleItems ||
+      []) as TFlashSaleItemWithRules[];
+
+    validateFlashSaleItemsBasicRules(flashSaleItems);
+
+    if (isActiveConflictStatus(payload.status || "DRAFT")) {
+      await ensureNoOverlappingFlashSale({
+        flashSaleItems,
+        startDate,
+        endDate,
+      });
+    }
   }
 
   if (
@@ -512,11 +890,16 @@ const createOffer = async (
     );
   }
 
-  const offer = await OfferCampaign.create({
+  const createData: Record<string, unknown> = {
     ...payload,
     code,
+    startDate,
+    endDate,
+    status: payload.status || "DRAFT",
     createdBy: adminId,
-  });
+  };
+
+  const offer = await OfferCampaign.create(createData);
 
   return offer;
 };
@@ -532,13 +915,17 @@ const getAllOffers = async (query: {
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const filter: Record<string, unknown> = {};
+  const filter: QueryFilter<IOfferCampaign> = {};
 
   if (query.type) {
     filter.type = query.type;
   }
 
   if (query.status) {
+    if (!isOfferStatus(query.status)) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Invalid offer status");
+    }
+
     filter.status = query.status;
   }
 
@@ -556,8 +943,8 @@ const getAllOffers = async (query: {
   const [offers, total] = await Promise.all([
     OfferCampaign.find(filter)
       .populate("createdBy", "name mobile")
-      .populate("flashSaleItems.product", "name slug images")
-      .populate("bundle.items.product", "name slug images")
+      .populate("flashSaleItems.product", "name slug images baseSellingPrice")
+      .populate("bundle.items.product", "name slug images baseSellingPrice")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
@@ -588,14 +975,65 @@ const getActivePublicOffers = async () => {
 };
 
 const updateOffer = async (id: string, payload: Partial<IOfferCampaign>) => {
-  const updateData = {
+  const existingOffer = await OfferCampaign.findById(id);
+
+  if (!existingOffer) {
+    throw new AppError(httpStatus.NOT_FOUND, "Offer not found");
+  }
+
+  const updateData: Record<string, unknown> = {
     ...payload,
   };
 
+  delete updateData._id;
   delete updateData.code;
   delete updateData.type;
   delete updateData.usedCount;
   delete updateData.createdBy;
+  delete updateData.createdAt;
+  delete updateData.updatedAt;
+
+  const startDate = payload.startDate
+    ? parseDateOrThrow(payload.startDate, "Start date")
+    : existingOffer.startDate;
+
+  const endDate = payload.endDate
+    ? parseDateOrThrow(payload.endDate, "End date")
+    : existingOffer.endDate;
+
+  validateOfferDateRange(startDate, endDate);
+
+  updateData.startDate = startDate;
+  updateData.endDate = endDate;
+
+  const finalStatus = payload.status || existingOffer.status;
+
+  if (existingOffer.type === "FLASH_SALE") {
+    const finalFlashSaleItems = (payload.flashSaleItems ||
+      existingOffer.flashSaleItems) as TFlashSaleItemWithRules[];
+
+    validateFlashSaleItemsBasicRules(finalFlashSaleItems);
+
+    if (isActiveConflictStatus(finalStatus)) {
+      await ensureNoOverlappingFlashSale({
+        flashSaleItems: finalFlashSaleItems,
+        startDate,
+        endDate,
+        excludeOfferId: id,
+      });
+    }
+  }
+
+  if (
+    existingOffer.type === "BUNDLE" &&
+    payload.bundle?.discountType === "PERCENTAGE" &&
+    Number(payload.bundle.discountValue) > 100
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Percentage discount cannot be more than 100",
+    );
+  }
 
   const offer = await OfferCampaign.findByIdAndUpdate(id, updateData, {
     new: true,
