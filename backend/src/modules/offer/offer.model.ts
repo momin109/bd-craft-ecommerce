@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
-import {
+
+import type {
   IAppliedOfferItem,
   IBundleItem,
   IBundleOffer,
@@ -22,6 +23,11 @@ const flashSaleItemSchema = new Schema<IFlashSaleItem>(
       index: true,
     },
 
+    regularPrice: {
+      type: Number,
+      min: 0,
+    },
+
     flashPrice: {
       type: Number,
       required: true,
@@ -37,6 +43,18 @@ const flashSaleItemSchema = new Schema<IFlashSaleItem>(
       type: Number,
       default: 0,
       min: 0,
+    },
+
+    perUserLimit: {
+      type: Number,
+      min: 1,
+    },
+
+    status: {
+      type: String,
+      enum: ["ACTIVE", "INACTIVE"],
+      default: "ACTIVE",
+      index: true,
     },
   },
   {
@@ -74,6 +92,12 @@ const bundleOfferSchema = new Schema<IBundleOffer>(
     items: {
       type: [bundleItemSchema],
       default: [],
+      validate: {
+        validator(value: IBundleItem[]) {
+          return Array.isArray(value) && value.length >= 2;
+        },
+        message: "Bundle needs at least 2 items",
+      },
     },
 
     discountType: {
@@ -156,6 +180,11 @@ const offerCampaignSchema = new Schema<IOfferCampaign>(
       index: true,
     },
 
+    bannerImage: {
+      type: String,
+      trim: true,
+    },
+
     flashSaleItems: {
       type: [flashSaleItemSchema],
       default: [],
@@ -167,8 +196,8 @@ const offerCampaignSchema = new Schema<IOfferCampaign>(
 
     status: {
       type: String,
-      enum: ["ACTIVE", "INACTIVE"],
-      default: "ACTIVE",
+      enum: ["DRAFT", "SCHEDULED", "ACTIVE", "PAUSED", "EXPIRED", "INACTIVE"],
+      default: "DRAFT",
       index: true,
     },
 
@@ -189,16 +218,27 @@ offerCampaignSchema.index({
   endDate: 1,
 });
 
+offerCampaignSchema.index({
+  type: 1,
+  status: 1,
+  "flashSaleItems.product": 1,
+  "flashSaleItems.variantId": 1,
+  startDate: 1,
+  endDate: 1,
+});
+
 const appliedOfferItemSchema = new Schema<IAppliedOfferItem>(
   {
     product: {
       type: Schema.Types.ObjectId,
       ref: "Product",
       required: true,
+      index: true,
     },
 
     variantId: {
       type: Schema.Types.ObjectId,
+      index: true,
     },
 
     quantity: {
@@ -280,6 +320,7 @@ const offerRedemptionSchema = new Schema<IOfferRedemption>(
 
     releasedAt: {
       type: Date,
+      index: true,
     },
 
     usedAt: {
@@ -301,6 +342,19 @@ offerRedemptionSchema.index(
     unique: true,
   },
 );
+
+offerRedemptionSchema.index({
+  offer: 1,
+  customer: 1,
+  type: 1,
+  releasedAt: 1,
+});
+
+offerRedemptionSchema.index({
+  customer: 1,
+  "items.product": 1,
+  "items.variantId": 1,
+});
 
 export const OfferCampaign = model<IOfferCampaign>(
   "OfferCampaign",
