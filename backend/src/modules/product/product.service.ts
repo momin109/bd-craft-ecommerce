@@ -5,6 +5,8 @@ import { createSlug } from "../../utils/createSlug.js";
 import { Category } from "../category/category.model.js";
 import { IProduct } from "./product.interface.js";
 import { Product } from "./product.model.js";
+import { OfferService } from "../offer/offer.service.js";
+import { offerRoutes } from "../offer/offer.route.js";
 
 type TProductQuery = {
   search?: string;
@@ -150,7 +152,60 @@ const getSingleProduct = async (slug: string) => {
     throw new AppError(httpStatus.NOT_FOUND, "Product not found");
   }
 
-  return product;
+  /**
+   * Attach active flash sale offer
+   * for product details page
+   */
+
+  const activeOffers = await OfferService.getActivePublicOffers();
+
+  const flashOffer = activeOffers.find((offer) => {
+    if (offer.type !== "FLASH_SALE") {
+      return false;
+    }
+
+    const matchedItem = offer.flashSaleItems?.find((item) => {
+      return String(item.product._id ?? item.product) === String(product._id);
+    });
+
+    return Boolean(matchedItem);
+  });
+
+  const offerItem = flashOffer?.flashSaleItems?.find((item) => {
+    return String(item.product._id ?? item.product) === String(product._id);
+  });
+
+  return {
+    ...product.toObject(),
+
+    activeOffer:
+      flashOffer && offerItem
+        ? {
+            offerId: flashOffer._id,
+            code: flashOffer.code,
+            title: flashOffer.title,
+            description: flashOffer.description,
+
+            startDate: flashOffer.startDate,
+            endDate: flashOffer.endDate,
+
+            type: flashOffer.type,
+
+            regularPrice: offerItem.regularPrice ?? product.baseSellingPrice,
+
+            offerPrice: offerItem.flashPrice,
+
+            discountAmount:
+              (offerItem.regularPrice ?? product.baseSellingPrice) -
+              offerItem.flashPrice,
+
+            stockLimit: offerItem.stockLimit,
+            soldCount: offerItem.soldCount,
+
+            perUserLimit: offerItem.perUserLimit,
+          }
+        : null,
+  };
 };
 
 const updateProduct = async (id: string, payload: Partial<IProduct>) => {
