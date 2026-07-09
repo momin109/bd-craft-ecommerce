@@ -7,6 +7,7 @@ import TrustBadges from "@/components/home/TrustBadges";
 import PromoPopup from "@/components/home/PromoPopup";
 import { useProducts } from "@/hooks/queries/useProducts";
 import { normalizeProductList } from "@/types/api/product";
+import FlashSaleSection from "@/components/offers/FlashSaleSection";
 
 export default function HomePage() {
   // Backend exposes a single /products listing endpoint (no dedicated
@@ -25,6 +26,8 @@ export default function HomePage() {
       <PromoPopup />
       <HeroCarousel />
       <AarongShowcase />
+
+      <FlashSaleSection />
 
       <FeaturedProducts
         title="New Arrivals"
